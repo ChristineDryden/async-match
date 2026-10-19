@@ -46,6 +46,12 @@ const PROMPTS: PromptItem[] = [
     description: "战绩、主要对手和最近几场比分。",
     ask: "Melo 近况怎么样？",
   },
+  {
+    key: "predict",
+    label: "对战胜率",
+    description: "用 Elo 估计 Melo 对阵 Ray 谁更可能赢。",
+    ask: "预测 Melo 对战 Ray 的获胜概率",
+  },
 ];
 
 const open = ref(false);

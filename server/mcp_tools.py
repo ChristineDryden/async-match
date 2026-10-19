@@ -4,6 +4,7 @@ import json
 from typing import Any, Callable
 
 from server import db
+from server import elo as E
 from server import standings as S
 
 TOOL_DEFS: list[dict[str, Any]] = [
@@ -97,6 +98,28 @@ TOOL_DEFS: list[dict[str, Any]] = [
                 "query": {"type": "string"},
             },
             "required": ["query"],
+        },
+    },
+    {
+        "name": "predict_matchup",
+        "description": "用 Elo 预测两名选手下一场谁更可能赢。问对战胜率、谁赢面大、预测 xx 对战 yy 时必须调用。选手名支持模糊匹配。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "player_a": {"type": "string", "description": "选手 A"},
+                "player_b": {"type": "string", "description": "选手 B"},
+            },
+            "required": ["player_a", "player_b"],
+        },
+    },
+    {
+        "name": "get_elo_ratings",
+        "description": "按 Elo 排序的选手实力榜，用于比较整体实力。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "top_n": {"type": "integer", "description": "默认 15", "default": 15},
+            },
         },
     },
 ]
@@ -296,6 +319,32 @@ def tool_get_recent_matches(
     return {"window": label, "matches": slim}
 
 
+def tool_predict_matchup(player_a: str, player_b: str, **_: Any) -> dict[str, Any]:
+    matches = _load_matches()
+    a = S.resolve_player(matches, player_a)
+    b = S.resolve_player(matches, player_b)
+    if not a["match"] or not b["match"]:
+        return {
+            "error": "选手无法唯一匹配",
+            "player_a": a,
+            "player_b": b,
+        }
+    if a["match"] == b["match"]:
+        return {"error": "请提供两名不同选手", "player": a["match"]}
+    return E.predict_matchup(matches, a["match"], b["match"])
+
+
+def tool_get_elo_ratings(top_n: int = 15, **_: Any) -> dict[str, Any]:
+    matches = _load_matches()
+    rows = E.elo_table(matches, top_n=_clip(top_n, 15, 1, 40))
+    return {
+        "model": "elo",
+        "k_factor": E.K_FACTOR,
+        "player_count": len(E.compute_elo(matches)),
+        "ratings": rows,
+    }
+
+
 def tool_search_players(query: str, **_: Any) -> dict[str, Any]:
     matches = _load_matches()
     resolved = S.resolve_player(matches, query)
@@ -314,6 +363,8 @@ HANDLERS: dict[str, Callable[..., Any]] = {
     "get_head_to_head": tool_get_head_to_head,
     "get_recent_matches": tool_get_recent_matches,
     "search_players": tool_search_players,
+    "predict_matchup": tool_predict_matchup,
+    "get_elo_ratings": tool_get_elo_ratings,
 }
 
 

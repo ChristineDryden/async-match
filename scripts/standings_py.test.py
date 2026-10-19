@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from server.elo import compute_elo, expected_score, predict_matchup, win_probability
 from server.standings import (
     compute_player_standings,
     compute_team_standings,
@@ -93,6 +94,20 @@ def test_unknown_mcp_tool():
     assert res["result"]["isError"] is True
 
 
+def test_elo_equal_ratings():
+    assert abs(expected_score(1500, 1500) - 0.5) < 1e-9
+    assert abs(win_probability(1600, 1500) - expected_score(1600, 1500)) < 1e-9
+
+
+def test_elo_melo_above_ray():
+    table = compute_elo(MATCHES)
+    assert table["Melo"]["elo"] > table["Ray"]["elo"]
+    pred = predict_matchup(MATCHES, "Melo", "Ray")
+    assert pred["p_a_win"] > 0.5
+    assert pred["h2h_a_wins"] == 1
+    assert pred["model"] == "elo"
+
+
 def test_mcp_initialize_and_list():
     init = handle_rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
     assert init["result"]["serverInfo"]["name"] == "async-match"
@@ -100,6 +115,8 @@ def test_mcp_initialize_and_list():
     names = {t["name"] for t in listed["result"]["tools"]}
     assert "get_player_standings" in names
     assert "get_head_to_head" in names
+    assert "predict_matchup" in names
+    assert "get_elo_ratings" in names
 
 
 if __name__ == "__main__":
