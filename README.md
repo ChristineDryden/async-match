@@ -6,7 +6,7 @@
 
 ```
 async-match/
-  server/          Flask API（比赛列表、增量同步）
+  server/          Flask API、MCP 工具、Grok 聊天
   frontend/        Vue 3 + TypeScript + Axios
   scripts/         抓取脚本与后端测试
   deploy/          systemd 示例
@@ -25,6 +25,7 @@ export MYSQL_HOST=127.0.0.1
 export MYSQL_USER=dbeaver
 export MYSQL_PASSWORD='your-password'
 export MYSQL_DATABASE=async_match
+export XAI_API_KEY='your-xai-api-key'
 python3 -m server.app
 ```
 
@@ -133,6 +134,11 @@ journalctl -u async-match -f
 - **快捷时间**：3h / 6h / 12h（快捷键 `1` `2` `3`，`0` 为全部）
 - **自定义区间**：选择起止时间后点「应用区间」
 - **一键同步**：从库里最新一场的时间点接着爬 drafted.gg，已存在的 ID 不会重复入库
+- **右下角助手**：Grok 4.6 通过 MCP 工具查库里的积分榜、选手战绩和交锋记录
+
+聊天需要 [xAI API Key](https://console.x.ai)，写入环境变量 `XAI_API_KEY`，不要提交到 Git。模型默认 `grok-4.6`。
+
+MCP 入口：`POST /mcp`（Streamable HTTP）。Grok 聊天走 `POST /api/chat`，后端用同一套工具查 MySQL。
 
 ## API
 
@@ -141,6 +147,8 @@ journalctl -u async-match -f
 | GET | `/api/health` | 探活 |
 | GET | `/api/matches` | 全部已入库比赛 |
 | POST | `/api/sync` | 增量同步 drafted.gg |
+| POST | `/api/chat` | Grok 4.6 比赛分析（会调 MCP 工具） |
+| GET/POST | `/mcp` | 比赛数据 MCP 服务 |
 
 ## 同步规则
 

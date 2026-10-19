@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 
 from server import db
+from server.chat import run_chat
 from server.config import HOST, PORT
+from server.mcp_http import mcp_response
 from server.sync import parse_match_time, scrape_since
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +45,32 @@ def api_matches():
             "latest": latest.isoformat().replace("+00:00", "Z") if latest else None,
         }
     )
+
+
+@app.post("/api/chat")
+def api_chat():
+    data = request.get_json(silent=True) or {}
+    message = data.get("message")
+    messages = data.get("messages")
+    try:
+        result = run_chat(
+            message=str(message or "") if message else None,
+            messages=messages if isinstance(messages, list) else None,
+        )
+        return jsonify(result)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except RuntimeError as exc:
+        return jsonify({"error": str(exc)}), 503
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": f"Grok 调用失败：{exc}"}), 502
+
+
+@app.route("/mcp", methods=["GET", "POST", "OPTIONS"])
+def mcp_endpoint():
+    if request.method == "OPTIONS":
+        return ("", 204)
+    return mcp_response()
 
 
 @app.post("/api/sync")

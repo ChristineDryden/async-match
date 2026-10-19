@@ -22,3 +22,14 @@ export function streakClass(strk: string): string {
   if (strk.startsWith("L")) return "loss";
   return "";
 }
+
+export function formatChatHtml(text: string): string {
+  const escaped = String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return escaped
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^[-*] /gm, "• ")
+    .replace(/\n/g, "<br>");
+}
