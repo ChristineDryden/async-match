@@ -1,8 +1,22 @@
 # Valhalla League 篮球积分榜
 
-从 [drafted.gg/valhalla-league/results](https://drafted.gg/valhalla-league/results) 抓取篮球赛果，写入远程 MySQL，页面按积分榜样式统计。
+从 [drafted.gg/valhalla-league/results](https://drafted.gg/valhalla-league/results) 抓取篮球赛果，写入远程 MySQL。后端提供 JSON API，前端是独立的 Vue 3 应用。
+
+## 目录
+
+```
+async-match/
+  server/          Flask API（比赛列表、增量同步）
+  frontend/        Vue 3 + TypeScript + Axios
+  scripts/         抓取脚本与后端测试
+  deploy/          systemd 示例
+```
+
+本地开发时前后端分开跑。部署时先构建前端，再由 Flask 托管 `frontend/dist`。
 
 ## 本地启动
+
+**1. 后端**
 
 ```bash
 cd async-match
@@ -14,11 +28,30 @@ export MYSQL_DATABASE=async_match
 python3 -m server.app
 ```
 
-打开 http://127.0.0.1:8765
+API：http://127.0.0.1:8765/api/matches
+
+**2. 前端**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+打开 http://127.0.0.1:5173 ，Vite 会把 `/api` 代理到 8765。
+
+## 前端命令
+
+```bash
+cd frontend
+npm run dev      # 开发
+npm run build    # 产出 frontend/dist
+npm test         # 积分榜逻辑测试
+```
 
 ## 部署到云服务器 43.155.239.46
 
-MySQL 已经在这台机器上。把代码放到服务器后，用 gunicorn 对外提供 8765 端口。
+MySQL 已经在这台机器上。把代码放到服务器后，构建前端，再用 gunicorn 对外提供 8765 端口。
 
 **1. 从本机上传代码**
 
@@ -40,20 +73,25 @@ ssh root@43.155.239.46
 ```bash
 apt update
 apt install -y python3 python3-venv python3-pip curl
+# 前端构建需要 Node.js 18+
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
 cd /opt/async-match
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cd frontend
+npm install
+npm run build
 ```
 
-CentOS / Tencent Linux 把 `apt` 换成 `yum` 或 `dnf`。
+CentOS / Tencent Linux 把 `apt` 换成 `yum` 或 `dnf`。也可以在本机 `npm run build` 后把 `frontend/dist` 一起上传。
 
 **4. 先手动跑一次确认能通**
 
 ```bash
 cd /opt/async-match
 source .venv/bin/activate
-# 程序和 MySQL 在同一台机，走本机更稳
 export MYSQL_HOST=127.0.0.1
 export MYSQL_USER=dbeaver
 export MYSQL_PASSWORD='your-password'
@@ -95,6 +133,14 @@ journalctl -u async-match -f
 - **快捷时间**：3h / 6h / 12h（快捷键 `1` `2` `3`，`0` 为全部）
 - **自定义区间**：选择起止时间后点「应用区间」
 - **一键同步**：从库里最新一场的时间点接着爬 drafted.gg，已存在的 ID 不会重复入库
+
+## API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/health` | 探活 |
+| GET | `/api/matches` | 全部已入库比赛 |
+| POST | `/api/sync` | 增量同步 drafted.gg |
 
 ## 同步规则
 

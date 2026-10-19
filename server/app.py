@@ -2,29 +2,33 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, abort, jsonify, send_from_directory
 
 from server import db
 from server.config import HOST, PORT
 from server.sync import parse_match_time, scrape_since
 
 ROOT = Path(__file__).resolve().parents[1]
+FRONTEND_DIST = ROOT / "frontend" / "dist"
 app = Flask(__name__)
 
 
-@app.get("/")
-def index():
-    return send_from_directory(ROOT, "index.html")
+@app.after_request
+def add_cors(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
 
 
-@app.get("/player.html")
-def player_page():
-    return send_from_directory(ROOT, "player.html")
+@app.route("/api/<path:_rest>", methods=["OPTIONS"])
+def api_preflight(_rest: str):
+    return ("", 204)
 
 
-@app.get("/js/<path:filename>")
-def js_files(filename: str):
-    return send_from_directory(ROOT / "js", filename)
+@app.get("/api/health")
+def api_health():
+    return jsonify({"ok": True})
 
 
 @app.get("/api/matches")
@@ -58,6 +62,27 @@ def api_sync():
             "total": db.match_count(),
         }
     )
+
+
+@app.get("/", defaults={"path": ""})
+@app.get("/<path:path>")
+def spa(path: str):
+    if path.startswith("api/"):
+        abort(404)
+    if not FRONTEND_DIST.exists():
+        return (
+            jsonify(
+                {
+                    "error": "frontend not built",
+                    "hint": "cd frontend && npm install && npm run build",
+                }
+            ),
+            503,
+        )
+    target = FRONTEND_DIST / path
+    if path and target.is_file():
+        return send_from_directory(FRONTEND_DIST, path)
+    return send_from_directory(FRONTEND_DIST, "index.html")
 
 
 def main() -> None:
