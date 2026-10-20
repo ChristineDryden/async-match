@@ -75,6 +75,30 @@ a {
   font-size: 12px;
 }
 
+.session-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-btn:hover,
+.text-btn:focus-visible {
+  color: var(--text);
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -454,6 +478,80 @@ a {
 
 .results {
   margin-top: 40px;
+}
+
+.gate {
+  min-height: calc(100vh - 92px);
+  display: grid;
+  place-items: center;
+}
+
+.scoreboard {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 28px 28px 24px;
+}
+
+.scoreboard .league {
+  margin: 0 0 18px;
+  color: var(--red);
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.scoreboard h1 {
+  margin: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 52px;
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.scoreboard .lead {
+  margin: 12px 0 22px;
+  color: var(--muted);
+  max-width: 28ch;
+}
+
+.scoreboard form {
+  display: grid;
+  gap: 14px;
+}
+
+.scoreboard label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scoreboard input {
+  height: 42px;
+  border: 1px solid var(--line);
+  background: var(--cell);
+  color: var(--text);
+  padding: 0 12px;
+  font: inherit;
+}
+
+.scoreboard input:focus {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+}
+
+.gate-error {
+  margin: 0;
+  color: var(--loss);
+  font-size: 13px;
+}
+
+.scoreboard .action {
+  justify-self: start;
+  margin-top: 4px;
 }
 
 .results h2,

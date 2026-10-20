@@ -3,7 +3,10 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import DateTimePicker from "../components/DateTimePicker.vue";
 import GameList from "../components/GameList.vue";
 import StandingsTable from "../components/StandingsTable.vue";
+import { useRouter } from "vue-router";
+import { logout } from "../api/auth";
 import { fetchMatches, syncMatches } from "../api/matches";
+import { markLoggedOut } from "../router";
 import { formatDate, formatTime } from "../lib/format";
 import {
   computePlayerStandings,
@@ -15,6 +18,7 @@ import type { Match } from "../types/match";
 
 type Mode = "team" | "player";
 
+const router = useRouter();
 const matches = ref<Match[]>([]);
 const count = ref(0);
 const loadError = ref("");
@@ -103,6 +107,15 @@ function applyRange() {
   mode.value = "player";
 }
 
+async function onLogout() {
+  try {
+    await logout();
+  } finally {
+    markLoggedOut();
+    await router.replace({ name: "login" });
+  }
+}
+
 async function onSync() {
   syncing.value = true;
   syncStatus.value = "正在从 drafted.gg 增量同步…";
@@ -158,7 +171,10 @@ onUnmounted(() => {
         <span class="dot"></span>
         <span>{{ headline }}</span>
       </div>
-      <div class="meta">{{ loadError ? "Loading failed" : meta }}</div>
+      <div class="meta session-meta">
+        <span>{{ loadError ? "Loading failed" : meta }}</span>
+        <button type="button" class="text-btn" @click="onLogout">退出</button>
+      </div>
     </div>
 
     <div class="toolbar">

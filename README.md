@@ -26,6 +26,8 @@ export MYSQL_USER=dbeaver
 export MYSQL_PASSWORD='your-password'
 export MYSQL_DATABASE=async_match
 export XAI_API_KEY='your-xai-api-key'
+export AUTH_USERNAME='admin'
+export AUTH_PASSWORD='change-me'
 python3 -m server.app
 ```
 
@@ -39,7 +41,7 @@ npm install
 npm run dev
 ```
 
-打开 http://127.0.0.1:5173 ，Vite 会把 `/api` 代理到 8765。
+打开 http://127.0.0.1:5173 。未登录会停在登录页，默认账号 `admin` / `admin123`，可用 `AUTH_USERNAME` 和 `AUTH_PASSWORD` 改掉。Vite 会把 `/api` 代理到 8765。
 
 ## 前端命令
 
@@ -144,6 +146,9 @@ MCP 入口：`POST /mcp`（Streamable HTTP）。Grok 聊天走 `POST /api/chat`�
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
+| POST | `/api/auth/login` | 登录，写入 HttpOnly 会话 |
+| POST | `/api/auth/logout` | 退出 |
+| GET | `/api/auth/me` | 当前登录用户 |
 | GET | `/api/health` | 探活 |
 | GET | `/api/matches` | 全部已入库比赛 |
 | POST | `/api/sync` | 增量同步 drafted.gg |

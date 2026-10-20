@@ -3,6 +3,10 @@ import os
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8765"))
 
+AUTH_USERNAME = os.environ.get("AUTH_USERNAME", "admin")
+AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "admin123")
+SESSION_HOURS = int(os.environ.get("SESSION_HOURS", "168"))
+
 XAI_API_KEY = os.environ.get("XAI_API_KEY", "sk-f4efa7125675d7e6dc7f1bf069f0d22dac6a8a01590e136295d8762f436b1c7b")
 XAI_MODEL = os.environ.get("XAI_MODEL", "grok-4.7")
 XAI_BASE_URL = os.environ.get("XAI_BASE_URL", "https://sub.geiliapi.com/v1")
